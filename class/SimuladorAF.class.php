@@ -50,8 +50,15 @@ class SimuladorAF
     			array_push($estados, $estado);
     			unset($automato[$i][0]);
 
-    			// nao deu certo
-    			$transicoes[$estado] = array_combine($alfabeto, $automato[$i]);
+    			// combina os simbolos do alfabeto com as transicoes correspondentes
+    			$transicoesEmString = array_combine($alfabeto, $automato[$i]);
+    			// transforma as strings de transicoes em array (mais facil processar)
+    			foreach ($transicoesEmString as $simbolo => $transicao) {
+					// apaga os caracteres {}
+					$transicao = preg_replace('/({|})/u', '', $transicao);
+					// espara a string em array a cada , encontrado e elimina as posições vazias
+					$transicoes[$estado][$simbolo] = array_diff(explode(',', $transicao),['']);
+    			}
     		}
 
     		$this->automatos[$arquivo] = new Automato($estados, $alfabeto, $transicoes, $inicio, $finais);
@@ -62,7 +69,9 @@ class SimuladorAF
 
     	foreach ($this->stringsTest as $arq => $cadeias) {
     		foreach ($cadeias as $cadeia) {
-				echo ($this->automatos[$arquivo]->testarNFA($cadeia))? '"' . $cadeia . '" aceita ! '."\n" : '"' . $cadeia . '" nao aceita! '."\n";
+				 // print_r($cadeia."\n");
+				echo ($this->automatos[$arquivo]->testarDFA($cadeia))? '"' . $cadeia . '" aceita ! '."\n" : '"' . $cadeia . '" nao aceita! '."\n";
+				// break;
 			}
     	}
 	}

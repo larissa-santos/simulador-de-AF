@@ -9,6 +9,8 @@ class Automato
 	public $transicoes = array();
 	public $inicio = '';
 	public $finais = array();
+	public $isENFA = false;
+	public $isNFA = false;
 
 	/**
 	* @param array $estados (Q) é um conjunto finito de estados.
@@ -42,7 +44,7 @@ class Automato
     * Testa string no automato finito deterministico
     * @param string $cadeia
     */
-    function testarAFD($cadeia) {
+    function testarDFA($cadeia) {
 
     	$estado_atual = $this->inicio;
 
@@ -51,7 +53,7 @@ class Automato
 		    if (in_array($cadeia[$i], $this->alfabeto)) {
 		    	// verifica se existe uma transicao do estado atual ativada pelo caracter lido
 			    if (isset($this->transicoes[$estado_atual][$cadeia[$i]])) {
-			   		$estado_atual = $this->transicoes[$estado_atual][$cadeia[$i]];
+			   		$estado_atual = $this->transicoes[$estado_atual][$cadeia[$i]][0];
 			   	} else {
 			   		return false;
 			   	}
@@ -73,6 +75,17 @@ class Automato
     * @param string $cadeia
     */
     function testar($cadeia) {
+
+    	if ($ENFA) {
+     		return $this->converteENFAparaDFA();
+     	}
+
+     	if ($NFA) {
+     		return $this->testarNFA();
+     	}
+
+     	return $this->testarDFA();
+     	
     	// estado => posicao atual na cadeia
     	$estadoAtual = array($this->inicio => 0);
     	$processa = true;
@@ -179,17 +192,18 @@ class Automato
 
     public function identificaAutomato()
     {	
-    	$ENFA = false;
-
     	foreach ($this->estados as $estado) {
-    		if ( isset($this->transicoes[$estado]["vazia"]) ) {
-	     		$ENFA = true;
+    		// verifica se a transicao possui mais de um estado
+    		foreach ($this->alfabeto as $simbolo) {
+    			if ( count($this->transicoes[$estado][$simbolo]) > 1) {
+		     		$this->isNFA = true;
+		     	}
+    		}
+    		// verifica se existe a transicao para vazio
+    		if ( isset($this->transicoes[$estado]["&"]) ) {
+	     		$this->isENFA = true;
 	     	}
     	}
-     	
-     	if ($ENFA) {
-     		$this->converteENFAparaDFA();
-     	}
     }
 
     public function converteENFAparaDFA()
