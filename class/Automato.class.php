@@ -76,15 +76,15 @@ class Automato
     */
     function testar($cadeia) {
 
-    	if ($ENFA) {
-     		return $this->converteENFAparaDFA();
+    	if ($this->isENFA) {
+     		return $this->converteENFAparaDFA($cadeia);
      	}
 
-     	if ($NFA) {
-     		return $this->testarNFA();
+     	if ($this->isNFA) {
+     		return $this->testarNFA($cadeia);
      	}
 
-     	return $this->testarDFA();
+     	return $this->testarDFA($cadeia);
      	
     	// estado => posicao atual na cadeia
     	$estadoAtual = array($this->inicio => 0);
