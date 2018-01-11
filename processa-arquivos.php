@@ -15,8 +15,8 @@ $conteudoZip = ManipulaArquivos::leituraDeArquivoZip($argv[1]);
 // die();
 $simulador = new SimuladorAF($conteudoZip);
 // var_dump($simulador);
-$simulador->simularEmTodos('ex_dfa02');
-// $simulador->simularEmTodos('ex_nfa01');
+// $simulador->simularEmTodos('ex_dfa01');
+$simulador->simularEmTodos('ex_nfa01');
 // $simulador->simularEmTodos('ex_epsilon_nfa');
 die();
 

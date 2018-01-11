@@ -76,73 +76,75 @@ class Automato
     */
     function testar($cadeia) {
 
+    	$this->identificaAutomato();
+    	
     	if ($this->isENFA) {
      		return $this->converteENFAparaDFA($cadeia);
      	}
 
      	if ($this->isNFA) {
-     		return $this->testarNFA($cadeia);
+     		$this->converteNFAparaDFA();
      	}
 
      	return $this->testarDFA($cadeia);
      	
-    	// estado => posicao atual na cadeia
-    	$estadoAtual = array($this->inicio => 0);
-    	$processa = true;
+  //   	// estado => posicao atual na cadeia
+  //   	$estadoAtual = array($this->inicio => 0);
+  //   	$processa = true;
 
-    	try
-    	{
+  //   	try
+  //   	{
 
-       		while ($processa) {
+  //      		while ($processa) {
 
-				$proximosEstados = [];
+		// 		$proximosEstados = [];
 
-				foreach ($estadoAtual as $estado => $indice) {
+		// 		foreach ($estadoAtual as $estado => $indice) {
 
-					// verifica se existe uma transicao do estado atual ativada pelo caracter lido
-					$proximosEstadosElemento = [];
-					foreach ($this->transicaoDeEstado($estado, $cadeia[$indice]) as $proximoEstado) {
-						$proximosEstadosElemento[$proximoEstado] = $indice + 1;
-					}
+		// 			// verifica se existe uma transicao do estado atual ativada pelo caracter lido
+		// 			$proximosEstadosElemento = [];
+		// 			foreach ($this->transicaoDeEstado($estado, $cadeia[$indice]) as $proximoEstado) {
+		// 				$proximosEstadosElemento[$proximoEstado] = $indice + 1;
+		// 			}
 
-					// verifica se existe uma transicao do estado atual ativada pela string vazia
-					$proximosEstadosVazia = [];
-					foreach ($this->transicaoDeEstado($estado, '&') as $proximoEstado) {
-						$proximosEstadosVazia[$proximoEstado] = $indice;
-					}
+		// 			// verifica se existe uma transicao do estado atual ativada pela string vazia
+		// 			$proximosEstadosVazia = [];
+		// 			foreach ($this->transicaoDeEstado($estado, '&') as $proximoEstado) {
+		// 				$proximosEstadosVazia[$proximoEstado] = $indice;
+		// 			}
 
-					// nenhum proximo estado encontrado
-					if (count($proximosEstadosElemento) == 0 && count($proximosEstadosVazia) == 0) {
-						//$proximosEstados = $proximosEstados;
-						// ---- remove o estado atual do array 
-					} else {
+		// 			// nenhum proximo estado encontrado
+		// 			if (count($proximosEstadosElemento) == 0 && count($proximosEstadosVazia) == 0) {
+		// 				//$proximosEstados = $proximosEstados;
+		// 				// ---- remove o estado atual do array 
+		// 			} else {
 					
 
-						// ---- verificar modo de fazer isso com as keys
-						// $proximosEstados = array_unique( array_merge(
-						// 	$proximosEstados, 
-						// 	$proximosEstadosVazia, 
-						// 	$proximosEstadosElemento
-						// ));	
-					}	   						
-				}
-				$processa = false;
-				$estadoAtual = $proximosEstados;
-				var_dump($estadoAtual);
-			}
-		}
-		catch (Exception $e)
-		{
-			var_dump($e);
-			return false; 	
-		} 
+		// 				// ---- verificar modo de fazer isso com as keys
+		// 				// $proximosEstados = array_unique( array_merge(
+		// 				// 	$proximosEstados, 
+		// 				// 	$proximosEstadosVazia, 
+		// 				// 	$proximosEstadosElemento
+		// 				// ));	
+		// 			}	   						
+		// 		}
+		// 		$processa = false;
+		// 		$estadoAtual = $proximosEstados;
+		// 		var_dump($estadoAtual);
+		// 	}
+		// }
+		// catch (Exception $e)
+		// {
+		// 	var_dump($e);
+		// 	return false; 	
+		// } 
 
-		// verifica se é um estado de aceitação
-		if (count(array_intersect($estadoAtual,$this->finais)) > 0 ) {
-			return true;
-		}
+		// // verifica se é um estado de aceitação
+		// if (count(array_intersect($estadoAtual,$this->finais)) > 0 ) {
+		// 	return true;
+		// }
 
-		return false;
+		// return false;
     } 
 
 
@@ -174,9 +176,9 @@ class Automato
 						$proximosEstadosElemento
 					));		   						
 				}
-				var_dump($cadeia[$i]);
+				// var_dump($cadeia[$i]);
 				$estadoAtual = $proximosEstados;
-				var_dump($estadoAtual);
+				// var_dump($estadoAtual);
 			} else {
 				return false;
 			}
@@ -204,6 +206,73 @@ class Automato
 	     		$this->isENFA = true;
 	     	}
     	}
+    }
+
+    public function converteNFAparaDFA()
+    {
+
+    	$converter = true;
+    	while ($converter) {
+    		$converter = !($this->converteEstadosNaoDeterministicos());
+    	}
+
+    	// var_dump($this->transicoes);
+    	// var_dump($this->estados);
+    	// var_dump($this->finais);
+    }
+    /**
+    * Procura pelos estados com mais de uma possibilidade de caminho
+    * Transformando um estado nao deterministico em deterministico
+    */
+    private function converteEstadosNaoDeterministicos(){
+
+    	$todosEstadosConvertidos = true;
+    	$novosEstados = [];
+    	$copiaTransicoes = $this->transicoes;
+    	foreach ($this->estados as $estado) {
+    		// verifica se a transicao possui mais de um estado
+    		foreach ($this->alfabeto as $simbolo) {
+    			if ( count($copiaTransicoes[$estado][$simbolo]) > 1) {
+    				sort($copiaTransicoes[$estado][$simbolo]); //ordena valores
+    				// une o array em uma string e adiciona nas variaveis necessarias
+    				$novoEstado = implode(",", $copiaTransicoes[$estado][$simbolo]); 
+		     		array_push($novosEstados, $novoEstado);
+		     		$copiaTransicoes[$estado][$simbolo] = array($novoEstado); // marca processamento do estado
+		     	}
+    		}
+    	}
+
+    	foreach ($novosEstados as $novoEstado) {
+    		if (!in_array($novoEstado, $this->estados)) {
+     			array_push($this->estados, $novoEstado);
+     			$auxEstados = explode(',', $novoEstado);
+
+     			foreach ($this->alfabeto as $simbolo) {
+     				$novaTransicao = [];
+     				foreach ($auxEstados as $estado) {
+     					if ($x = $this->transicaoDeEstado($estado, $simbolo)) {
+     						$y = [];
+     						foreach ($x as $valor) {
+ 	    						$y = array_merge($y, explode(',', $valor));
+     						}
+     						$novaTransicao = array_unique(array_merge($novaTransicao,$y));
+     						sort($novaTransicao);
+     					}
+
+     					if (!in_array($novoEstado, $this->finais) &&
+     							in_array($estado, $this->finais) ) {
+     						array_push($this->finais, $novoEstado);
+     					}
+     				}
+
+     				$copiaTransicoes[$novoEstado][$simbolo] = $novaTransicao;
+     				if (count($novaTransicao) > 1) $todosEstadosConvertidos = false;
+     			}
+     		}
+    	}
+    	$this->transicoes = $copiaTransicoes;
+
+    	return $todosEstadosConvertidos;
     }
 
     public function converteENFAparaDFA()
