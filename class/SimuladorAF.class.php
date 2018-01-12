@@ -61,6 +61,11 @@ class SimuladorAF
     			}
     		}
 
+    		// removendo o vazio do alfabeto
+    		if (($indice = array_search('&', $alfabeto)) !== false) {
+			    unset($alfabeto[$indice]);
+			}
+
     		$this->automatos[$arquivo] = new Automato($estados, $alfabeto, $transicoes, $inicio, $finais);
     	}
     }
@@ -69,8 +74,9 @@ class SimuladorAF
 
     	foreach ($this->stringsTest as $arq => $cadeias) {
     		foreach ($cadeias as $cadeia) {
-				 // print_r($cadeia."\n");
+    			
 				echo ($this->automatos[$arquivo]->testar($cadeia))? '"' . $cadeia . '" aceita ! '."\n" : '"' . $cadeia . '" nao aceita! '."\n";
+				// var_dump($this->automatos[$arquivo]);
 				// break;
 			}
     	}

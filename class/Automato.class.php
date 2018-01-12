@@ -79,59 +79,15 @@ class Automato
     	$this->identificaAutomato();
     	
     	if ($this->isENFA) {
-     		return $this->converteENFAparaDFA($cadeia);
-     	}
-
-     	if ($this->isNFA) {
+     		$this->converteENFAparaDFA();
+     	} else if($this->isNFA) {
      		$this->converteNFAparaDFA();
      	}
 
      	return $this->testarDFA($cadeia);
      	
-  //   	// estado => posicao atual na cadeia
-  //   	$estadoAtual = array($this->inicio => 0);
-  //   	$processa = true;
-
-  //   	try
-  //   	{
-
-  //      		while ($processa) {
-
-		// 		$proximosEstados = [];
-
-		// 		foreach ($estadoAtual as $estado => $indice) {
-
-		// 			// verifica se existe uma transicao do estado atual ativada pelo caracter lido
-		// 			$proximosEstadosElemento = [];
-		// 			foreach ($this->transicaoDeEstado($estado, $cadeia[$indice]) as $proximoEstado) {
-		// 				$proximosEstadosElemento[$proximoEstado] = $indice + 1;
-		// 			}
-
-		// 			// verifica se existe uma transicao do estado atual ativada pela string vazia
-		// 			$proximosEstadosVazia = [];
-		// 			foreach ($this->transicaoDeEstado($estado, '&') as $proximoEstado) {
-		// 				$proximosEstadosVazia[$proximoEstado] = $indice;
-		// 			}
-
-		// 			// nenhum proximo estado encontrado
-		// 			if (count($proximosEstadosElemento) == 0 && count($proximosEstadosVazia) == 0) {
-		// 				//$proximosEstados = $proximosEstados;
-		// 				// ---- remove o estado atual do array 
-		// 			} else {
-					
-
-		// 				// ---- verificar modo de fazer isso com as keys
-		// 				// $proximosEstados = array_unique( array_merge(
-		// 				// 	$proximosEstados, 
-		// 				// 	$proximosEstadosVazia, 
-		// 				// 	$proximosEstadosElemento
-		// 				// ));	
-		// 			}	   						
-		// 		}
-		// 		$processa = false;
-		// 		$estadoAtual = $proximosEstados;
-		// 		var_dump($estadoAtual);
-		// 	}
+  		// try
+		// {
 		// }
 		// catch (Exception $e)
 		// {
@@ -139,61 +95,13 @@ class Automato
 		// 	return false; 	
 		// } 
 
-		// // verifica se é um estado de aceitação
-		// if (count(array_intersect($estadoAtual,$this->finais)) > 0 ) {
-		// 	return true;
-		// }
-
-		// return false;
-    } 
-
-
-    function testarNFA($cadeia) {
-
-    	$estadoAtual = [$this->inicio];
-
-        for ( $i = 0; $i < strlen($cadeia) ; $i++ ) {
-        	// verifica se o caracter pertence ao alfabeto do automato
-		    if (in_array($cadeia[$i], $this->alfabeto)) {
-
-		    	$proximosEstados = [];
-
-				foreach ($estadoAtual as $estado) { 
-					// verifica se existe uma transicao do estado atual ativada pelo caracter lido
-					$proximosEstadosElemento = $this->transicaoDeEstado($estado, $cadeia[$i]);
-
-					// verifica se existe uma transicao do estado atual ativada pela string vazia
-					$proximosEstadosVazia = $this->transicaoDeEstado($estado, '&');
-
-					// nenhum proximo estado encontrado
-					if (count($proximosEstadosElemento) == 0 && count($proximosEstadosVazia) == 0) {
-						return false;
-					}
-					
-					$proximosEstados = array_unique( array_merge(
-						$proximosEstados, 
-						$proximosEstadosVazia, 
-						$proximosEstadosElemento
-					));		   						
-				}
-				// var_dump($cadeia[$i]);
-				$estadoAtual = $proximosEstados;
-				// var_dump($estadoAtual);
-			} else {
-				return false;
-			}
-		} 
-
-		// verifica se é um estado de aceitação
-		if (count(array_intersect($estadoAtual,$this->finais)) > 0 ) {
-			return true;
-		}
-
-		return false;
-    }
+	} 
 
     public function identificaAutomato()
     {	
+    	$this->isENFA = false;
+		$this->isNFA = false;
+
     	foreach ($this->estados as $estado) {
     		// verifica se a transicao possui mais de um estado
     		foreach ($this->alfabeto as $simbolo) {
@@ -210,15 +118,10 @@ class Automato
 
     public function converteNFAparaDFA()
     {
-
     	$converter = true;
     	while ($converter) {
     		$converter = !($this->converteEstadosNaoDeterministicos());
     	}
-
-    	// var_dump($this->transicoes);
-    	// var_dump($this->estados);
-    	// var_dump($this->finais);
     }
     /**
     * Procura pelos estados com mais de uma possibilidade de caminho
@@ -277,83 +180,120 @@ class Automato
 
     public function converteENFAparaDFA()
     {
-    	$processa = function($Dstates) {
-    		foreach ($Dstates as $indice => $estado) {
-    			if (!$estado['marcado']) return true;
-    		}
-
-    		return false;
-    	};
-    	
-    	$eClosure = function($estados) {
-    		$estadosProximos = array();
-    		foreach ($estados as $estado) {
-    			$estadosProximos = array_unique( array_merge(
-					$estadosProximos, 
-					(isset($this->transicoes[$estado]['&']))? $this->transicoes[$estado]['&'] : []
-				));	
-    		}
-
-    		return $estadosProximos;
-    	};
-
-    	$move = function($estados, $simbolo) {
-    		$estadosProximos = array();
-    		foreach ($estados as $estado) {
-    			$estadosProximos = array_unique( array_merge(
-					$estadosProximos, 
-					(isset($this->transicoes[$estado][$simbolo]))? $this->transicoes[$estado][$simbolo] : []
-				));	
-    		}
-
-    		return $estadosProximos;
-    	};
-
-    	// agrupar todos os estado alcancados pela transicao de vazio a partir do estado selecionado
-    	$Dstates = $Dtransicoes = array();
-    	$i = 0;
-    	array_push($Dstates, array( 'nome' => 'Q0', 'marcado' => false, 'estados' => $eClosure([$this->inicio])));
-    	
-    	
-    	while ($processa($Dstates)) {
-
-    		// marcando estados
-    		foreach ($Dstates as $indice => $info) {
-    			if ( !$Dstates[$indice]['marcado']) {
-    				$Dstates[$indice]['marcado'] = true;
-    				$t = $Dstates[$indice];
-    				break;
-    			}
-    		}
-
-    		foreach ($this->alfabeto as $simbolo) {
-	    		$u = $eClosure($move($t['estados'], $simbolo));
-	    		// var_dump($move($t, $simbolo));
-	    		
-	    		if (count($u) > 0) {
-		    		// verifica se é um novo estado descoberto
-		    		$novoEstado = true;
-		    		foreach ($Dstates as $estado) {	
-			    		if (count($estado['estados']) === count(array_intersect($estado['estados'], $u))) {
-			    			$novoEstado = false;
-			    		}
-			    	}
-			    	
-			    	if ($novoEstado) {
-			    		$i++;
-			    		array_push($Dstates, array( 'nome' => 'Q'.$i , 'marcado' => false, 'estados' => $u));
-			    	}
-
-		    		$Dtransicoes[$t['nome']][$simbolo] = $u;
-		    		// var_dump($Dtransicoes);
-		    	}
-	    	}	
+    	// busca estado atingiveis pela transicao vazia
+    	foreach ($this->estados as $estado) {
+    		$atingiveisPorVazio[$estado] = $this->atingiveisPorTransicaoVazia([$estado]);
     	}
     	
-    	// $Dstates = array_keys($Dstates);
-    	var_dump($Dtransicoes);
-    	var_dump($Dstates);
+    	$novoInicio = $this->inicio . '-' . $this->concatenaArray($atingiveisPorVazio[$this->inicio]);
+	   	$novosFinais = $this->atualizaFinais([], [$this->inicio], $novoInicio);
+	   	$novosEstados = [];
+	   	array_push($novosEstados, $novoInicio);
+
+    	$indice = 0;
+    	while(count($novosEstados) > $indice ) {
+	    	foreach ($this->alfabeto as $simbolo) {
+	    		// busca estados atingiveis diretamente pelo novo estado
+	    		$x = $this->atingiveisPorTransicao($novosEstados[$indice],$simbolo);
+		    	// busca estados atingiveis pela transicao vazia atraves dos valores de $x
+		    	$y = $this->juntaAtingiveisPorVazio($x, $atingiveisPorVazio);
+
+		    	$novoEstado = $this->concatenaArray($x) . '-' . $this->concatenaArray($y);
+		    	$novasTransicoes[$novosEstados[$indice]][$simbolo] = [$novoEstado];
+
+		    	if (!in_array($novoEstado, $novosEstados)) {
+		    		array_push($novosEstados, $novoEstado);
+
+		    		$novosFinais = $this->atualizaFinais($novosFinais, $x, $novoEstado);
+		    	}
+	    	}
+	    	$indice++;
+	    }
+		
+		$this->inicio = $novoInicio;
+		$this->estados = $novosEstados;
+    	$this->transicoes = $novasTransicoes;
+    	$this->finais = $novosFinais;	
+    	// var_dump($this->estados);
+    	// var_dump($this->transicoes);
+    	// var_dump($this->finais);
+		// die();
     }
 
+    private function atualizaFinais ($novosFinais, $estados, $novoEstado) 
+    {
+    	// verifica se o novo estado deve ser um estado final
+    	foreach ($estados as $estado) {
+    		if (in_array($estado, $this->finais)) {
+    			array_push($novosFinais, $novoEstado);
+    		}
+    	}
+    	return $novosFinais;
+    }
+
+    private function juntaAtingiveisPorVazio($processarEstados, $atingiveis) 
+    {
+    	$conjunto = [];
+    	foreach ($processarEstados as $estado) {
+    		$conjunto = array_unique(
+    							array_merge(
+    								$conjunto, 
+    								$atingiveis[$estado]
+    						));
+    	}
+    	sort($conjunto);
+    	return $conjunto;
+    }
+
+    private function atingiveisPorTransicaoVazia($processarEstados)
+    {	
+    	// busca todos estados atingiveis pela transicao vazia
+    	$conjunto = [];
+    	foreach ( $processarEstados as $estado) {
+    		$conjunto = array_unique(
+    							array_merge(
+    								$conjunto, 
+    								$this->transicaoDeEstado($estado, '&')
+    						));
+    	}
+    	
+    	// retira oq tem no $conjunto e nao tem no $processarEstados. Ou seja, os nao processados
+    	$naoProcessados = array_diff($conjunto, $processarEstados);
+    	if (count($naoProcessados) > 0) {
+    		$conjunto = array_unique(
+    							array_merge(
+    								$conjunto, 
+    								$this->atingiveisPorTransicaoVazia($naoProcessados)
+    						));
+    	}
+    	sort($conjunto);
+    	return $conjunto;
+    }
+
+    private function atingiveisPorTransicao($estadoAtual,$simbolo)
+    {
+    	
+    	$string = str_replace('-', ',', $estadoAtual);
+    	$processarEstados = explode(',',$string); 
+
+    	// busca todos estados atingiveis pela transicao vazia
+    	$conjunto = [];
+    	foreach ( $processarEstados as $estado) {
+    		$conjunto = array_unique(
+    							array_merge(
+    								$conjunto, 
+    								$this->transicaoDeEstado($estado, $simbolo)
+    						));
+    	}
+    	
+    	return $conjunto;
+    }
+
+    public function concatenaArray($array, $delimitador = ',')
+    {
+    	sort($array);
+    	return implode(",", array_unique($array));
+    	
+    }
 
 }

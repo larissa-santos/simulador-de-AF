@@ -1,5 +1,7 @@
 <?php
 /* C:\xampp\php\php.exe C:\xampp\htdocs\simulador-de-AF\processa-arquivos.php C:\xampp\htdocs\simulador-de-AF\src\entradas.zip */
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // $arqEntrada = __DIR__ . '\src\entradas.zip';
 require_once('class/ManipulaArquivos.class.php');
@@ -16,8 +18,9 @@ $conteudoZip = ManipulaArquivos::leituraDeArquivoZip($argv[1]);
 $simulador = new SimuladorAF($conteudoZip);
 // var_dump($simulador);
 // $simulador->simularEmTodos('ex_dfa01');
-$simulador->simularEmTodos('ex_nfa01');
-// $simulador->simularEmTodos('ex_epsilon_nfa');
+// $simulador->simularEmTodos('ex_nfa01');
+$simulador->simularEmTodos('ex_epsilon_nfa');
+// var_dump($simulador);
 die();
 
 // /** reconhece cadeias com numero par de zero **/

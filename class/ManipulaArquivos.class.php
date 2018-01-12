@@ -14,7 +14,7 @@ class ManipulaArquivos
 	* @return array $retorno é o conjunto de arquivos contidos em $arq, 
 	* processados e separados em automatos ('AF') e entradas ('entradas')
 	*/
-    public function leituraDeArquivoZip($arq) {
+    public static function leituraDeArquivoZip($arq) {
     	$retorno = false;
 
 		if ($zip = zip_open($arq)) {
@@ -58,7 +58,7 @@ class ManipulaArquivos
 	* @param string $dados 
 	* @return array $retorno 
 	*/
-	protected function processaStrings($dados) {
+	protected static function processaStrings($dados) {
 		$retorno = Array();
 
 		foreach ($dados as $arquivo) {
@@ -99,7 +99,7 @@ class ManipulaArquivos
 	* @param string $string
 	* @return array com as linhas do arquivo em cada posição
 	*/
-	protected function removeQuebraDeLinha($string) {
+	protected static function removeQuebraDeLinha($string) {
 		return array_diff(explode('<br/>', preg_replace('/\R/u', '<br/>', $string)), ['']);
 	}
 }
