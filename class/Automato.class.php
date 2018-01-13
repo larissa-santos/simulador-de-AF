@@ -27,8 +27,16 @@ class Automato
 		$this->finais = $finais;
     }
 
+    /**
+    * Metodo transicaoDeEstado()
+    * Verifica se existe uma transição do estado $estado com o 
+    * símbolo lido $valor 
+    * @param string $estado com o estado de transição
+    * @param string $valor com o símbolo de transição
+    * @return array com os estados para onde o símbolo leva o automato
+    */
     function transicaoDeEstado($estado, $valor) {
-    	// verifica se o caracter pertence ao alfabeto do automato
+    	// verifica se o símbolo pertence ao alfabeto do automato
 		if (!in_array($valor, $this->alfabeto) && ($valor != '&')) {
 		    throw new Exception("O '$valor' não pertence ao alfabeto do automato", 1);
 		}
@@ -41,19 +49,21 @@ class Automato
     }
 
     /**
+    * Metodo testarDFA()
     * Testa string no automato finito deterministico
-    * @param string $cadeia
+    * @param string $cadeia que será testada no automato
+    * @return boolean com o resultado do teste
     */
     function testarDFA($cadeia) {
 
-    	$estado_atual = $this->inicio;
-
+    	$estadoAtual = $this->inicio;
+    	// percorre todos os simbolos da string ou para em caso de rejeição
         for ( $i=0; $i < strlen($cadeia) ; $i++ ) {
         	// verifica se o caracter pertence ao alfabeto do automato
 		    if (in_array($cadeia[$i], $this->alfabeto)) {
 		    	// verifica se existe uma transicao do estado atual ativada pelo caracter lido
-			    if (isset($this->transicoes[$estado_atual][$cadeia[$i]])) {
-			   		$estado_atual = $this->transicoes[$estado_atual][$cadeia[$i]][0];
+			    if (isset($this->transicoes[$estadoAtual][$cadeia[$i]])) {
+			   		$estadoAtual = $this->transicoes[$estadoAtual][$cadeia[$i]][0];
 			   	} else {
 			   		return false;
 			   	}
@@ -62,41 +72,47 @@ class Automato
 			}
 		} 
 
-		// verifica se é um estado de aceitação
-		if (in_array($estado_atual, $this->finais)) {
+		// verifica se o estado atual é um estado de aceitação
+		if (in_array($estadoAtual, $this->finais)) {
 			return true;
 		} else {
 			return false;
 		}
     }
 
-    /**
-    * Testa string no automato nao-deterministico
+    /** 
+    * Metodo testar()
+    * Identifica o tipo de automato, executa as ações necessarias de conversão para DFA
+    * e por fim testa se a string $cadeia é aceita pela automato
     * @param string $cadeia
+    * @return boolean com o resultado de aceitãção retornado do automato para a string
     */
-    function testar($cadeia) {
+    function testar($cadeia) 
+    {
+    	try 
+    	{
+	    	$this->identificaAutomato();
+	    	
+	    	if ($this->isENFA) {
+	     		$this->converteENFAparaDFA();
+	     	} else if($this->isNFA) {
+	     		$this->converteNFAparaDFA();
+	     	}
 
-    	$this->identificaAutomato();
-    	
-    	if ($this->isENFA) {
-     		$this->converteENFAparaDFA();
-     	} else if($this->isNFA) {
-     		$this->converteNFAparaDFA();
-     	}
-
-     	return $this->testarDFA($cadeia);
-     	
-  		// try
-		// {
-		// }
-		// catch (Exception $e)
-		// {
-		// 	var_dump($e);
-		// 	return false; 	
-		// } 
-
+	     	return $this->testarDFA($cadeia);
+	    }
+		catch (Exception $e)
+		{
+			var_dump($e);
+			return false; 	
+		}
 	} 
 
+	/**
+	* Metodo identificaAutomato()
+	* Verifica nos estados de transição do automato que tipo de 
+	* automato finito é, e o classifica.
+	*/
     public function identificaAutomato()
     {	
     	$this->isENFA = false;
@@ -116,6 +132,11 @@ class Automato
     	}
     }
 
+    /**
+    * Metodo converteNFAparaDFA()
+    * Converte os estados nao deterministicos ate que nao haja mais nenhum
+    * caminho nao deterministico no automato
+    */
     public function converteNFAparaDFA()
     {
     	$converter = true;
@@ -123,15 +144,20 @@ class Automato
     		$converter = !($this->converteEstadosNaoDeterministicos());
     	}
     }
+
     /**
+    * Metodo converteEstadosNaoDeterministicos()
     * Procura pelos estados com mais de uma possibilidade de caminho
     * Transformando um estado nao deterministico em deterministico
+    * @return boolean =FALSE caso o processo de conversao deva ser repetido
     */
-    private function converteEstadosNaoDeterministicos(){
-
+    private function converteEstadosNaoDeterministicos()
+    {
     	$todosEstadosConvertidos = true;
     	$novosEstados = [];
     	$copiaTransicoes = $this->transicoes;
+
+    	// procura os estados nao deterministicos
     	foreach ($this->estados as $estado) {
     		// verifica se a transicao possui mais de um estado
     		foreach ($this->alfabeto as $simbolo) {
@@ -139,22 +165,26 @@ class Automato
     				sort($copiaTransicoes[$estado][$simbolo]); //ordena valores
     				// une o array em uma string e adiciona nas variaveis necessarias
     				$novoEstado = implode(",", $copiaTransicoes[$estado][$simbolo]); 
-		     		array_push($novosEstados, $novoEstado);
-		     		$copiaTransicoes[$estado][$simbolo] = array($novoEstado); // marca processamento do estado
+		     		$copiaTransicoes[$estado][$simbolo] = [$novoEstado]; // marca processamento do estado
+			     	array_push($novosEstados, $novoEstado);
 		     	}
     		}
     	}
 
+    	// varrendo todos os estados novos
     	foreach ($novosEstados as $novoEstado) {
+    		// verifica se o estado já está entre os estados do automato
     		if (!in_array($novoEstado, $this->estados)) {
      			array_push($this->estados, $novoEstado);
-     			$auxEstados = explode(',', $novoEstado);
+     			$auxEstados = explode(',', $novoEstado); // transforma a string em array
 
+     			// verifica estados atingiveis a partir do novo 
      			foreach ($this->alfabeto as $simbolo) {
      				$novaTransicao = [];
      				foreach ($auxEstados as $estado) {
      					if ($x = $this->transicaoDeEstado($estado, $simbolo)) {
      						$y = [];
+     						// une todos os estados encontrados em um array
      						foreach ($x as $valor) {
  	    						$y = array_merge($y, explode(',', $valor));
      						}
@@ -178,6 +208,10 @@ class Automato
     	return $todosEstadosConvertidos;
     }
 
+    /**
+    * Metodo converteENFAparaDFA()
+    * Converte o automato NFA-e para um DFA 
+    */
     public function converteENFAparaDFA()
     {
     	// busca estado atingiveis pela transicao vazia
@@ -213,13 +247,18 @@ class Automato
 		$this->inicio = $novoInicio;
 		$this->estados = $novosEstados;
     	$this->transicoes = $novasTransicoes;
-    	$this->finais = $novosFinais;	
-    	// var_dump($this->estados);
-    	// var_dump($this->transicoes);
-    	// var_dump($this->finais);
-		// die();
+    	$this->finais = $novosFinais;
     }
 
+    /**
+    * Metodo atualizaFinais()
+    * Verifica se o novo estado se encaixa no quadro de estado final
+    * da nova versão do automato
+    * @param array $novosFinais com os estados finais já encontrados
+    * @param array $estados estados da primeira parte do novo estado
+    * @param string $novoEstado estado que esta sendo processado
+    * @return Array
+    */
     private function atualizaFinais ($novosFinais, $estados, $novoEstado) 
     {
     	// verifica se o novo estado deve ser um estado final
@@ -231,6 +270,14 @@ class Automato
     	return $novosFinais;
     }
 
+    /**
+    * Metodo juntaAtingiveisPorVazio()
+    * Junta todos os estados alcançaveis pela transição vazia a partir dos estados $processarEstados
+    * @param array $processarEstados estados a serem verificados
+    * @param array $atingiveis matriz com o conjunto de estados atingiveis pela
+    * transicao vazia de todos os estados iniciais do automato
+    * @return Array com o conjunto de estados atingiveis pela transicao vazia
+    */
     private function juntaAtingiveisPorVazio($processarEstados, $atingiveis) 
     {
     	$conjunto = [];
@@ -245,6 +292,13 @@ class Automato
     	return $conjunto;
     }
 
+    /**
+    * Metodo atingiveisPorTransicaoVazia()
+    * Busca por todos os estados alcançaveis recursivamente
+    * pela transição vazia a partir dos estados passados.
+    * @param Array $processarEstados estados a serem analizados
+    * @return Array com os estados atingiveis pela transição vazia
+    */
     private function atingiveisPorTransicaoVazia($processarEstados)
     {	
     	// busca todos estados atingiveis pela transicao vazia
@@ -266,10 +320,18 @@ class Automato
     								$this->atingiveisPorTransicaoVazia($naoProcessados)
     						));
     	}
-    	sort($conjunto);
+    	sort($conjunto); // ordena vetor
     	return $conjunto;
     }
 
+    /**
+    * Metodo atingiveisPorTransicao()
+    * Avalia os estados usados para montar o novo estado e busca os estados atingiveis
+    * por esses estados com o simbolo do alfabeto avaliado.
+    * @param string $estadoAtual com todos os estados que devem ser avaliados
+    * @param string $simbolo simbolo de transicao avalido nas transições de estado
+    * @return Array com os valores de estados encontrados com as transições possiveis
+    */
     private function atingiveisPorTransicao($estadoAtual,$simbolo)
     {
     	
@@ -289,11 +351,16 @@ class Automato
     	return $conjunto;
     }
 
+    /**
+    * Metodo concatenaArray()
+    * Concatena os valores de um array em uma string com separação de um caracter especificado
+    * @param array $array com valores a serem concatenados
+    * @param string $delimitador com o caracter que ficará entre os valores do array
+	* @return string formada pela concatenação dos valores
+    */
     public function concatenaArray($array, $delimitador = ',')
     {
-    	sort($array);
+    	sort($array); // ordena o array antes de concatenar
     	return implode(",", array_unique($array));
-    	
     }
-
 }

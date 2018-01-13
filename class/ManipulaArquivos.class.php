@@ -1,7 +1,7 @@
 <?php
 
 /**
-* Processa e cria arquivos
+* Processa os de arquivos entrada
 */
 class ManipulaArquivos
 {

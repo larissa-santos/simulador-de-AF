@@ -15,7 +15,9 @@ finais (F) - é um conjunto de estados de Q (isto é, F ⊆ Q) chamado de estado
 - Seguir as instruções de nomeações de arquivos
 
 ## Como usar
-Como entrada será necessário que tenha ao menos um arquivo com a tabela de transição do automato.
+Como entrada será necessário que tenha um ou mais arquivos com a tabela de transição do automato.
 Sendo um arquivo por automato. E outro com as strings que serão usadas para verificação no automato.
 
 Esses arquivos devem estar compactados em uma pasta `.zip`. O arquivo que contém as strings de teste deve ser nomeado como `entradas` ou `strings`, sendo assim os arquivos com as tabelas de transições dos automatos não podem conter as palavras no nome.
+
+Para executar o script, execute o comando: `php processa-arquivos.php src\entradas.zip`

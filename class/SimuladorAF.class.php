@@ -1,17 +1,14 @@
 <?php
-
 require_once('Automato.class.php');
 
 /**
-* Processa os dados passados, simulando os automatos
+* Processa os dados passados, simulando os automatos e criando arquivos de saida
 */
 class SimuladorAF
 {
 	public $stringsTest = Array();
 	public $stringsAutomatos = Array();
 	public $automatos = Array();
-
-	public $arquivoSaida = '';
 
 	public function __construct($dados) {
 		$this->stringsTest = $dados['stringsTest'];
@@ -20,6 +17,11 @@ class SimuladorAF
     	$this->processaStringsAutomatos();
     }
 
+    /**
+    * Metodo processaStringsAutomatos()
+	* Processa as strings lidas e as transforma em vetores
+	* para se tornarem a entidade Automato
+    */
     protected function processaStringsAutomatos(){
     	foreach ($this->stringsAutomatos as $arquivo => $automato) {
     		$alfabeto = $automato[0];
@@ -70,16 +72,39 @@ class SimuladorAF
     	}
     }
 
-    public function simularEmTodos($arquivo) {
+    /**
+    * Metodo simularTodos()
+    * Percorre todos os arquivos de automato lidos e os simula.
+    */
+    public function simularTodos()
+    {
+    	foreach ($this->automatos as $arq => $automato) {
+    		$this->simular($arq);
+    	}
+    }
 
+    /**
+    * Metodo simular()
+    * Simula automato combinando com todos arquivos de entrada, 
+    * gerando arquivo como saida
+    * @param string $arquivo com o nome do automato que será simulado
+    */
+    public function simular($arquivo) 
+    {
     	foreach ($this->stringsTest as $arq => $cadeias) {
+    		// abre/cria o arquivo para escrita
+			$fp = fopen($arquivo . '-' . $arq . '.txt', "a");
+			 
     		foreach ($cadeias as $cadeia) {
-    			
-				echo ($this->automatos[$arquivo]->testar($cadeia))? '"' . $cadeia . '" aceita ! '."\n" : '"' . $cadeia . '" nao aceita! '."\n";
-				// var_dump($this->automatos[$arquivo]);
-				// break;
+				$escreve = fwrite($fp, ($this->automatos[$arquivo]->testar($cadeia))? 
+					'"' . $cadeia . '" aceita ! '."\n" : '"' . $cadeia . '" nao aceita! '."\n");
+
+				// echo (($this->automatos[$arquivo]->testar($cadeia))? 
+				// 	'"' . $cadeia . '" aceita ! '."\n" : '"' . $cadeia . '" nao aceita! '."\n");
 			}
+			
+			fclose($fp); // fecha o arquivo
+			echo 'Arquivo criado: ' . $arquivo . '-' . $arq . ".txt\n";
     	}
 	}
-
 }
